@@ -13,7 +13,6 @@
   var rawTransactions = [];
   var rawAssets = [];
   var rawMarks = [];
-  var rawAssetClasses = [];
   var assetMap = {};
 
   function initDashboard() {
@@ -23,13 +22,11 @@
       SheetsAPI.readSheet('transactions'),
       SheetsAPI.readSheet('assets'),
       SheetsAPI.readSheet('marks'),
-      SheetsAPI.readSheet('asset_classes'),
     ])
       .then(function (results) {
         rawTransactions = results[0];
         rawAssets = results[1];
         rawMarks = results[2];
-        rawAssetClasses = results[3];
 
         // Asset lookup by ticker, handle both "description" and "name" columns
         assetMap = {};
@@ -50,7 +47,6 @@
         buildAndRender();
         setupSorting();
         setupFilters();
-        setupModal();
         document.getElementById('mark-date-select').addEventListener('change', buildAndRender);
         Utils.hideLoading();
       })
@@ -162,7 +158,6 @@
       return r;
     });
 
-    populateModalDropdowns();
     renderSummaryTables();
     sortAndRender();
   }
@@ -252,31 +247,6 @@
   }
 
   // --- Filters ---
-  function populateModalDropdowns() {
-    var accts = {};
-    detailRows.forEach(function (r) {
-      if (r.account) accts[r.account] = true;
-    });
-
-    var modalAcct = document.getElementById('new-account');
-    modalAcct.innerHTML = '';
-    Object.keys(accts).sort().forEach(function (a) {
-      var opt = document.createElement('option');
-      opt.value = a; opt.textContent = a;
-      modalAcct.appendChild(opt);
-    });
-
-    var modalClass = document.getElementById('new-asset-class');
-    modalClass.innerHTML = '<option value="">Select...</option>';
-    rawAssetClasses.forEach(function (ac) {
-      var name = ac.asset_class || '';
-      if (!name) return;
-      var opt = document.createElement('option');
-      opt.value = name; opt.textContent = name;
-      modalClass.appendChild(opt);
-    });
-  }
-
   function getFilteredRows() {
     var search = (document.getElementById('filter-search').value || '').toLowerCase();
     var hasAcctFilter = Object.keys(selectedAccounts).length > 0;
@@ -405,87 +375,6 @@
       '<th class="text-right ' + pnlClass + '">' + Utils.formatCurrency(totalPnl) + '</th>' +
       '<th class="text-right ' + pnlClass + '">' + Utils.formatPercent(totalPnlPct) + '</th>' +
       '</tr>';
-  }
-
-  // --- Add Asset Modal ---
-  function setupModal() {
-    var modal = document.getElementById('add-asset-modal');
-    var openBtn = document.getElementById('add-asset-btn');
-    var closeBtn = document.getElementById('close-modal-btn');
-    var cancelBtn = document.getElementById('cancel-asset-btn');
-    var saveBtn = document.getElementById('save-asset-btn');
-    var nameInput = document.getElementById('new-name');
-    var tickerInput = document.getElementById('new-ticker');
-
-    function showModal() { modal.classList.remove('hidden'); modal.style.display = 'flex'; }
-    function hideModal() { modal.classList.add('hidden'); modal.style.display = 'none'; }
-
-    openBtn.addEventListener('click', showModal);
-    closeBtn.addEventListener('click', hideModal);
-    cancelBtn.addEventListener('click', hideModal);
-
-    nameInput.addEventListener('input', function () {
-      if (!tickerInput.dataset.manual) {
-        tickerInput.value = Utils.generateTicker(nameInput.value);
-      }
-    });
-    tickerInput.addEventListener('input', function () {
-      tickerInput.dataset.manual = 'true';
-    });
-
-    saveBtn.addEventListener('click', function () {
-      var ticker = tickerInput.value.trim().toUpperCase();
-      var name = nameInput.value.trim();
-      var assetClass = document.getElementById('new-asset-class').value.trim();
-      var account = document.getElementById('new-account').value.trim();
-      var qty = Utils.parseNumber(document.getElementById('new-qty').value);
-      var price = Utils.parseNumber(document.getElementById('new-price').value);
-      var cost = Utils.parseNumber(document.getElementById('new-cost').value);
-      var today = Utils.formatDate(new Date());
-
-      if (!ticker || !name) {
-        Utils.showMessage('Ticker and Name are required', 'error');
-        return;
-      }
-
-      // Validate ticker: letters, numbers, dots, underscores only, max 20 chars
-      if (!/^[A-Z0-9._-]{1,20}$/.test(ticker)) {
-        Utils.showMessage('Ticker must be 1-20 characters: letters, numbers, dots, dashes', 'error');
-        return;
-      }
-
-      // Check for duplicate ticker
-      if (assetMap[ticker]) {
-        Utils.showMessage('Ticker "' + ticker + '" already exists', 'error');
-        return;
-      }
-
-      Utils.showLoading();
-
-      SheetsAPI.appendRows('assets', [[ticker, name, assetClass]])
-        .then(function () {
-          return SheetsAPI.appendRows('marks', [[ticker, today, price]]);
-        })
-        .then(function () {
-          return SheetsAPI.appendRows('transactions', [
-            [today, 'INITIAL_COST_BASIS', ticker, account, qty, price, cost],
-          ]);
-        })
-        .then(function () {
-          return PositionEngine.recalculatePositions();
-        })
-        .then(function () {
-          Utils.hideLoading();
-          Utils.showMessage('Asset "' + ticker + '" added', 'success');
-          hideModal();
-          initDashboard();
-        })
-        .catch(function (err) {
-          console.error('Save asset error:', err);
-          Utils.hideLoading();
-          Utils.showMessage('Error: ' + Utils.errMsg(err), 'error');
-        });
-    });
   }
 
   window.initDashboard = initDashboard;

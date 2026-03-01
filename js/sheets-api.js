@@ -36,8 +36,10 @@
                 callback: function () {},
               });
             }
-            // Auto sign-in: request OAuth2 token before proceeding
-            return signIn();
+            // Try silent sign-in first (no popup), fall back to consent prompt
+            return signIn(true).catch(function () {
+              return signIn(false);
+            });
           })
           .then(function () {
             resolve();
@@ -49,10 +51,10 @@
     });
   }
 
-  function signIn() {
+  function signIn(silent) {
     return new Promise(function (resolve, reject) {
       if (!tokenClient) {
-        reject(new Error('Token client not initialized. Call initSheetsApi() first.'));
+        reject(new Error('Token client not initialized.'));
         return;
       }
       tokenClient.callback = function (response) {
@@ -63,11 +65,11 @@
         accessToken = response.access_token;
         resolve(accessToken);
       };
-      if (accessToken) {
-        tokenClient.requestAccessToken({ prompt: '' });
-      } else {
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-      }
+      tokenClient.error_callback = function (err) {
+        reject(err);
+      };
+      // prompt: '' = silent/no popup; prompt: 'consent' = full popup
+      tokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' });
     });
   }
 
