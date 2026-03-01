@@ -15,6 +15,27 @@
   let gapiInitialized = false;
   let accessToken = null;
 
+  var TOKEN_KEY = '4f_access_token';
+  var TOKEN_EXPIRY_KEY = '4f_token_expiry';
+
+  function saveToken(token) {
+    accessToken = token;
+    sessionStorage.setItem(TOKEN_KEY, token);
+    // Tokens last ~3600s, save expiry with 5min buffer
+    sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + 3300000));
+  }
+
+  function loadCachedToken() {
+    var token = sessionStorage.getItem(TOKEN_KEY);
+    var expiry = parseInt(sessionStorage.getItem(TOKEN_EXPIRY_KEY) || '0', 10);
+    if (token && Date.now() < expiry) {
+      return token;
+    }
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+    return null;
+  }
+
   function initSheetsApi() {
     return new Promise(function (resolve, reject) {
       if (typeof gapi === 'undefined') {
@@ -36,7 +57,16 @@
                 callback: function () {},
               });
             }
-            // Try silent sign-in first (no popup), fall back to consent prompt
+
+            // Try cached token first
+            var cached = loadCachedToken();
+            if (cached) {
+              accessToken = cached;
+              gapi.client.setToken({ access_token: cached });
+              return;
+            }
+
+            // Try silent sign-in, fall back to consent prompt
             return signIn(true).catch(function () {
               return signIn(false);
             });
@@ -62,13 +92,13 @@
           reject(new Error(response.error));
           return;
         }
-        accessToken = response.access_token;
-        resolve(accessToken);
+        saveToken(response.access_token);
+        gapi.client.setToken({ access_token: response.access_token });
+        resolve(response.access_token);
       };
       tokenClient.error_callback = function (err) {
         reject(err);
       };
-      // prompt: '' = silent/no popup; prompt: 'consent' = full popup
       tokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' });
     });
   }
