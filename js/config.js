@@ -47,8 +47,29 @@
     'INITIAL_COST_BASIS': 'INITIAL_COST_BASIS',
   };
 
-  var ACCOUNT_NAME_MAP = {};
-  var ACCOUNT_LAST4_MAP = {};
+  // Map JPM CSV account names to gsheet account names
+  var ACCOUNT_NAME_MAP = {
+    'LFRM Brokerage': 'LFRM-JPM-3515',
+    'JJB': 'JJB-JPM-8409',
+    'JJB HF_PE': 'JJB-JPM-8005',
+    'Juju Sec': 'Juju-JPM-0166',
+    'LEONARD FEDER IRA RO': 'LFRM-JPM-IRA-6008',
+    'LFRM MLP': 'LFRM-JPM-MLP-7037',
+    'Roth LF': 'LFRM-JPM-Roth-9762',
+    'Roth RM': 'LFRM-JPM-Roth-9782',
+    'IRA LF': 'LFRM-JPM-IRA-1888',
+  };
+  var ACCOUNT_LAST4_MAP = {
+    '3515': 'LFRM-JPM-3515',
+    '8409': 'JJB-JPM-8409',
+    '8005': 'JJB-JPM-8005',
+    '0166': 'Juju-JPM-0166',
+    '6008': 'LFRM-JPM-IRA-6008',
+    '7037': 'LFRM-JPM-MLP-7037',
+    '9762': 'LFRM-JPM-Roth-9762',
+    '9782': 'LFRM-JPM-Roth-9782',
+    '1888': 'LFRM-JPM-IRA-1888',
+  };
   var ACCOUNT_OWNER_MAP = {};
 
   // Type badge colors
