@@ -25,6 +25,16 @@
     MEMO:              { position: false, intCash: false, extCash: false, label: 'no-op' },
   };
 
+  // Detect inter-account transfers (not truly external)
+  function isInterAccount(desc) {
+    var d = (desc || '').toLowerCase();
+    return d.indexOf('internal') !== -1 ||
+      d.indexOf('from (...') !== -1 || d.indexOf('from (…') !== -1 ||
+      d.indexOf('to (...') !== -1 || d.indexOf('to (…') !== -1 ||
+      /from \(\.\.\.\d{4}\)/.test(d) || /to \(\.\.\.\d{4}\)/.test(d) ||
+      d.indexOf('book transfer') !== -1;
+  }
+
   function initAudit() {
     Utils.showLoading();
     SheetsAPI.readSheet('transactions').then(function (txns) {
@@ -270,8 +280,8 @@
         case 'TRANSFER':
         case 'JOURNAL':
         case 'ADJUSTMENT':
-          // Check description for "internal" = inter-account
-          if (desc.indexOf('internal') !== -1) {
+          // Check description for inter-account patterns
+          if (isInterAccount(t.description)) {
             bucket = 'Inter-account';
             cashDelta = tAmount;
           } else {

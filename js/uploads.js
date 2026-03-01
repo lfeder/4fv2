@@ -11,6 +11,12 @@
   var pendingTransactionData = null;
 
   function initUploads() {
+    // Pre-load asset classes for the confirmation dropdown
+    SheetsAPI.readSheet('asset_classes').then(function (rows) {
+      window._cachedAssetClasses = rows;
+    }).catch(function () {
+      window._cachedAssetClasses = [];
+    });
     setupTabs();
     setupTransactionUpload();
     setupMarksUpload();
@@ -650,12 +656,30 @@
     }
 
     var asset = assetList[index];
+
+    // Build asset class dropdown from gsheet
+    var classOptions = '<option value="">Select...</option>';
+    var knownClasses = {};
+    // Collect from asset_classes tab (loaded earlier) + from the asset's own class
+    (window._cachedAssetClasses || []).forEach(function (ac) {
+      var name = ac.asset_class || '';
+      if (name && !knownClasses[name]) { knownClasses[name] = true; }
+    });
+    // Also add unique classes from assetList itself
+    assetList.forEach(function (a) {
+      if (a.asset_class && !knownClasses[a.asset_class]) knownClasses[a.asset_class] = true;
+    });
+    Object.keys(knownClasses).sort().forEach(function (cls) {
+      var sel = cls === asset.asset_class ? ' selected' : '';
+      classOptions += '<option value="' + Utils.esc(cls) + '"' + sel + '>' + Utils.esc(cls) + '</option>';
+    });
+
     var bodyHTML =
       '<div class="form-row">' +
         '<div class="form-group"><label>Ticker</label><input type="text" id="modal-ticker" value="' + Utils.esc(asset.ticker) + '"></div>' +
         '<div class="form-group"><label>Description</label><input type="text" id="modal-desc" value="' + Utils.esc(asset.description) + '"></div>' +
       '</div>' +
-      '<div class="form-group"><label>Asset Class</label><input type="text" id="modal-class" value="' + Utils.esc(asset.asset_class) + '"></div>' +
+      '<div class="form-group"><label>Asset Class</label><select id="modal-class">' + classOptions + '</select></div>' +
       '<p class="text-sm text-muted mt-1">Asset ' + (index + 1) + ' of ' + assetList.length + '</p>';
 
     Utils.showModal('New Asset: ' + asset.ticker, bodyHTML, [

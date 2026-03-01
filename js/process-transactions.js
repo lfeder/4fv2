@@ -109,6 +109,21 @@
             }
             break;
 
+          case 'SWEEP':
+            if (tQty > 0 || (tQty === 0 && tAmount > 0)) {
+              var sweepBuyQty = tQty || tAmount;
+              qty += sweepBuyQty;
+              cost += Math.abs(tAmount) || (sweepBuyQty * tPrice);
+            } else if (tQty < 0 || tAmount < 0) {
+              var sweepSellQty = Math.abs(tQty) || Math.abs(tAmount);
+              if (qty > 0 && sweepSellQty > 0) {
+                var sweepAvg = cost / qty;
+                cost -= sweepSellQty * sweepAvg;
+              }
+              qty -= sweepSellQty;
+            }
+            break;
+
           default:
             break;
         }
@@ -130,6 +145,69 @@
         price: price,
         value: value,
         cost: cost,
+      });
+    });
+
+    // === Synthetic CASH position per account ===
+    var cashByAccount = {};
+    // Sort all transactions by date for cash trace
+    var allTxnsSorted = transactions.slice().sort(function (a, b) {
+      if (a.date < b.date) return -1;
+      if (a.date > b.date) return 1;
+      return 0;
+    });
+
+    allTxnsSorted.forEach(function (t) {
+      var acct = t.account_name || '';
+      if (!acct) return;
+      if (!cashByAccount[acct]) cashByAccount[acct] = 0;
+
+      var type = (t.transaction_type || '').toUpperCase();
+      var tAmount = Utils.parseNumber(t.amount);
+      var tQty = Utils.parseNumber(t.quantity);
+      var tPrice = Utils.parseNumber(t.price);
+
+      switch (type) {
+        case 'DIVIDEND':
+        case 'INTEREST':
+        case 'DISTRIBUTION':
+          cashByAccount[acct] += tAmount;
+          break;
+        case 'CAPITAL_CALL':
+        case 'FEE':
+          cashByAccount[acct] -= Math.abs(tAmount);
+          break;
+        case 'TRANSFER':
+        case 'JOURNAL':
+        case 'ADJUSTMENT':
+          cashByAccount[acct] += tAmount;
+          break;
+        case 'BUY':
+          cashByAccount[acct] -= (Math.abs(tAmount) || (Math.abs(tQty) * tPrice));
+          break;
+        case 'SELL':
+          cashByAccount[acct] += (Math.abs(tAmount) || (Math.abs(tQty) * tPrice));
+          break;
+        case 'REINVEST':
+          // Net zero: dividend cash used for buy
+          break;
+        default:
+          break;
+      }
+    });
+
+    // Add CASH positions for non-zero balances
+    Object.keys(cashByAccount).forEach(function (acct) {
+      var bal = cashByAccount[acct];
+      if (Math.abs(bal) < 0.01) return;
+      positions.push({
+        date: Utils.formatDate(new Date()),
+        account_name: acct,
+        ticker: 'CASH',
+        qty: bal,
+        price: 1,
+        value: bal,
+        cost: bal,
       });
     });
 
