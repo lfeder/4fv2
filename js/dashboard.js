@@ -166,8 +166,22 @@
   var selectedAccounts = {};
   var selectedClasses = {};
 
-  function toggleSelection(map, key) {
-    if (map[key]) { delete map[key]; } else { map[key] = true; }
+  function handleSelection(map, key, ctrlKey) {
+    if (ctrlKey) {
+      // Ctrl+click: toggle this item in multi-select
+      if (map[key]) { delete map[key]; } else { map[key] = true; }
+    } else {
+      // Plain click: single select (or deselect if already the only selection)
+      var keys = Object.keys(map);
+      if (keys.length === 1 && map[key]) {
+        // Already sole selection — deselect
+        delete map[key];
+      } else {
+        // Clear all, select only this one
+        keys.forEach(function (k) { delete map[k]; });
+        map[key] = true;
+      }
+    }
   }
 
   // --- Summary Tables ---
@@ -203,8 +217,8 @@
     tfoot.innerHTML = '<tr><th>Total</th><th class="text-right">' + Utils.formatCurrency(total) + '</th><th class="text-right">100%</th></tr>';
 
     tbody.querySelectorAll('tr[data-acct]').forEach(function (tr) {
-      tr.addEventListener('click', function () {
-        toggleSelection(selectedAccounts, tr.getAttribute('data-acct'));
+      tr.addEventListener('click', function (e) {
+        handleSelection(selectedAccounts, tr.getAttribute('data-acct'), e.ctrlKey || e.metaKey);
         renderAccountTable();
         sortAndRender();
       });
@@ -238,8 +252,8 @@
     tfoot.innerHTML = '<tr><th>Total</th><th class="text-right">' + Utils.formatCurrency(total) + '</th><th class="text-right">100%</th></tr>';
 
     tbody.querySelectorAll('tr[data-cls]').forEach(function (tr) {
-      tr.addEventListener('click', function () {
-        toggleSelection(selectedClasses, tr.getAttribute('data-cls'));
+      tr.addEventListener('click', function (e) {
+        handleSelection(selectedClasses, tr.getAttribute('data-cls'), e.ctrlKey || e.metaKey);
         renderAllocationTable();
         sortAndRender();
       });
