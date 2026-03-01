@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Positions to GSheet</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #e0e0e0; }
+    #log { white-space: pre-wrap; margin-top: 20px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    .ok { color: #4caf50; }
+    .err { color: #f44336; }
+  </style>
+</head>
+<body>
+  <h2>Upload Initial Positions to GSheet</h2>
+  <p>This will upsert assets, marks, and INITIAL_COST_BASIS transactions into the spreadsheet.</p>
+  <button id="btn" onclick="run()">Upload Now</button>
+  <div id="log"></div>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script>
+    function log(msg, cls) {
+      var el = document.getElementById('log');
+      var span = document.createElement('span');
+      span.className = cls || '';
+      span.textContent = msg + '\n';
+      el.appendChild(span);
+    }
+
+    // Embedded data from output TSVs
+    var ASSETS = [
+      ["JTSXX","JPMORGAN 100% U S TREASURY SECURITIES MONEY MKT FD - INST SH CL","Fixed Income & Cash"],
+      ["PBHAX","PGIM HIGH YIELD FUND INC CLASS A","Fixed Income & Cash"],
+      ["TSLX","SIXTH STREET SPECIALTY LENDING INC COMMON STOCK $0.01 PAR VALUE","Equity"],
+      ["SPY","SPDR S&P 500 ETF TRUST","Equity"],
+      ["QQQ","INVESCO QQQ TR UNIT SER 1","Equity"],
+      ["FDN","FIRST TRUST ETF DOW JONES INTERNET INDEX FUND","Equity"],
+      ["AMZN","AMAZON.COM INC","Equity"],
+      ["GOOG","ALPHABET INC CLASS C CAPITAL STOCK","Equity"],
+      ["ARCC","ARES CAPITAL CORPORATION","Equity"],
+      ["BABA","ALIBABA GROUP HOLDING LTD SPONSORED ADR","Equity"],
+      ["UNITEDSTATESDOL","UNITED STATES DOLLAR CURRENCY CONTRACT","Fixed Income & Cash"],
+      ["BFCXX","FEDFUND PREMIER CHOICE SHARES","Fixed Income & Cash"],
+      ["ACCOUNTCONTROLA","ACCOUNT CONTROL AGREEMENT","Other"],
+      ["JPMORGANCHASEBA","JPMORGAN CHASE BANK LOAN","Equity"],
+      ["CLIENTHASJPMSOM","CLIENT HAS JPMS OMNI ACCOUNT","Other"],
+      ["BITXX","BLACKROCK LIQUIDITY FUNDS TRSRY TRST FD PRTFLO ADMIN CL","Fixed Income & Cash"],
+      ["VOO","VANGUARD S&P 500 ETF","Equity"],
+      ["VGT","VANGUARD SECTOR INDEX FDS VANGUARD INFORMATION TECHNOLOGY ETF","Equity"],
+      ["JPMORGANDEPOSIT","JPMORGAN DEPOSIT ACCT D BROKERAGE RET JPMC BK NA","Fixed Income & Cash"],
+      ["GOIXX","FEDERATED HERMES GOVT OBL CL ISS","Fixed Income & Cash"],
+      ["SIXTHSTREETLEND","SIXTH STREET LENDING PARTNERS - ONSHORE - CLASS A","Alternative Assets"],
+      ["USDOLLAR","US DOLLAR","Fixed Income & Cash"],
+      ["BAERW","WTS BRIDGER AEROSPACE GROUP HLDGS INC","Equity"],
+      ["JWSWF","WTS JAWS MUSTANG ACQUISITION CORP WARRANT","Equity"],
+      ["ALURWS","WTS ALLURION TECHNOLOGIES INC WTS TO PURCHASE 0.056818 SHRS OF COM STCK AT PRICE $202.50","Equity"],
+      ["WTSFATHOMDIGITA","WTS FATHOM DIGITAL MANUFACTURING CORPORATION ECH WT EXRBL FR CL A SHR FR $11.50","Equity"],
+      ["FRSXX","FIMM TREASURY ONLY PORTFOLIO INSTITUTIONAL CLASS","Fixed Income & Cash"],
+      ["PYMAX","PIMCO HIGH YIELD MUNICIPAL BOND CLASS A","Fixed Income & Cash"],
+      ["JPMPRJ","JPMORGAN CHASE & CO DEP SHS REPSTG 1/400TH INT NON CUM PFD SER GG","Equity"],
+      ["ET","ENERGY TRANSFER LP COMMON UNITS REPRESENTING LIMITED PARTNER INTERESTS","Equity"],
+      ["MPLX","MPLX LP COM UNIT REPSTG LTD PARTNER INT","Equity"],
+      ["WES","WESTERN MIDSTREAM PARTNERS LP COMMON UNITS REPRESENTING LIMITED PARTNER INTERESTS","Equity"],
+      ["TRGP","TARGA RESOURCES CORP","Equity"],
+      ["EPD","ENTERPRISE PRODUCTS PARTNERS LP","Equity"],
+      ["ENLINKMIDSTREAM","ENLINK MIDSTREAM LLC COM UNIT REPSTG LTD LIABILITY CO INTS","Equity"],
+      ["PAGP","PLAINS GP HOLDINGS L P CLASS A UNITS REPRESENTING LIMITED PARTNER INTERESTS","Equity"],
+      ["OKE","ONEOK INC","Equity"],
+      ["PAA","PLAINS ALL AMERICAN PIPELINE L P COMMON UNITS REPRESENTING LIMITED PARTNER INTERESTS","Equity"],
+      ["LNG","CHENIERE ENERGY INC COMMON STOCK","Equity"],
+      ["WMB","WILLIAMS COMPANIES INC","Equity"],
+      ["GEL","GENESIS ENERGY LP UNITS LTD PARTNERSHIP INT","Equity"],
+      ["KNTK","KINETIK HOLDINGS INC CLASS A COMMON STOCK","Equity"],
+      ["AM","ANTERO MIDSTREAM CORPORATION COMMON STOCK","Equity"],
+      ["DTM","DT MIDSTREAM INC COMMON STOCK","Equity"],
+      ["KMI","KINDER MORGAN INC","Equity"],
+      ["PSX","PHILLIPS 66 COM","Equity"],
+      ["ENB","ENBRIDGE INC","Equity"],
+      ["JUNIUSPARTNERPR","JUNIUS PARTNER PROGRAM ONSHORE","Alternative Assets"],
+      ["COATUEGROWTHVPR","COATUE GROWTH V PRIVATE INVESTORS, L.L.C. - DIK - CLASS A","Alternative Assets"],
+      ["JUNIUSBELAIRCIV","JUNIUS BEL AIR CIV US ONSHORE, LP","Alternative Assets"],
+      ["TIGERGLOBALPIPX","TIGER GLOBAL PIP XV PRIVATE INVESTORS, LLC  - DIK - CLASS A","Alternative Assets"],
+      ["CSSAFPRIVATEINV","CSSAF PRIVATE INVESTORS, LLC (CARLYLE SUB-SAHARAN AFRICA FUND) CLASS A","Alternative Assets"],
+      ["COATUEGROWTHFUN","COATUE GROWTH FUND V-B PRIVATE INVESTORS, LLC DIK - CLASS A","Alternative Assets"],
+      ["GSOPRIVATEINVES","GSO PRIVATE INVESTORS II, LLC CLASS A","Alternative Assets"]
+    ];
+
+    // De-duped marks (one per ticker, all 2025-01-31)
+    var MARKS = [
+      ["JTSXX","2025-01-31",1],["PBHAX","2025-01-31",4.82],["TSLX","2025-01-31",22.38],
+      ["SPY","2025-01-31",601.82],["QQQ","2025-01-31",522.29],["FDN","2025-01-31",262.88],
+      ["AMZN","2025-01-31",237.68],["GOOG","2025-01-31",205.6],["ARCC","2025-01-31",23.67],
+      ["BABA","2025-01-31",98.84],["UNITEDSTATESDOL","2025-01-31",0],["BFCXX","2025-01-31",1],
+      ["ACCOUNTCONTROLA","2025-01-31",0],["JPMORGANCHASEBA","2025-01-31",0],
+      ["CLIENTHASJPMSOM","2025-01-31",0],["BITXX","2025-01-31",1],["VOO","2025-01-31",553.33],
+      ["VGT","2025-01-31",616.61],["JPMORGANDEPOSIT","2025-01-31",1],["GOIXX","2025-01-31",1],
+      ["SIXTHSTREETLEND","2025-01-31",0.47],["USDOLLAR","2025-01-31",1],
+      ["BAERW","2025-01-31",0.1333],["JWSWF","2025-01-31",0.04],["ALURWS","2025-01-31",0.044],
+      ["WTSFATHOMDIGITA","2025-01-31",0],["FRSXX","2025-01-31",1],["PYMAX","2025-01-31",8.49],
+      ["JPMPRJ","2025-01-31",20.88],["ET","2025-01-31",20.48],["MPLX","2025-01-31",52.01],
+      ["WES","2025-01-31",41.15],["TRGP","2025-01-31",196.8],["EPD","2025-01-31",32.65],
+      ["ENLINKMIDSTREAM","2025-01-31",14.12],["PAGP","2025-01-31",21.15],["OKE","2025-01-31",97.17],
+      ["PAA","2025-01-31",19.8],["LNG","2025-01-31",223.65],["WMB","2025-01-31",55.43],
+      ["GEL","2025-01-31",10.52],["KNTK","2025-01-31",64.43],["AM","2025-01-31",16.04],
+      ["DTM","2025-01-31",101.08],["KMI","2025-01-31",27.48],["PSX","2025-01-31",117.87],
+      ["ENB","2025-01-31",43.24],["JUNIUSPARTNERPR","2025-01-31",0.34],
+      ["COATUEGROWTHVPR","2025-01-31",0.66],["JUNIUSBELAIRCIV","2025-01-31",0.73],
+      ["TIGERGLOBALPIPX","2025-01-31",0.67],["CSSAFPRIVATEINV","2025-01-31",0.53],
+      ["COATUEGROWTHFUN","2025-01-31",0.45],["GSOPRIVATEINVES","2025-01-31",0.06]
+    ];
+
+    var TRANSACTIONS = [
+      ["2025-01-31","INITIAL_COST_BASIS","JTSXX","JJB",1428349.1,1,1428349.1,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PBHAX","JJB",208089.96,4.82,975946.81,""],
+      ["2025-01-31","INITIAL_COST_BASIS","TSLX","JJB",32879,22.38,629262.85,""],
+      ["2025-01-31","INITIAL_COST_BASIS","SPY","JJB",907,601.82,411090.48,""],
+      ["2025-01-31","INITIAL_COST_BASIS","QQQ","JJB",1011,522.29,334188.1,""],
+      ["2025-01-31","INITIAL_COST_BASIS","FDN","JJB",1643,262.88,218780.61,""],
+      ["2025-01-31","INITIAL_COST_BASIS","AMZN","JJB",1580,237.68,175304.99,""],
+      ["2025-01-31","INITIAL_COST_BASIS","GOOG","JJB",600,205.6,49510.85,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ARCC","JJB",4682,23.67,92370.46,""],
+      ["2025-01-31","INITIAL_COST_BASIS","BABA","JJB",1070,98.84,278320.37,""],
+      ["2025-01-31","INITIAL_COST_BASIS","UNITEDSTATESDOL","JJB",563.1,0,563.1,""],
+      ["2025-01-31","INITIAL_COST_BASIS","BFCXX","JJB",1.47,1,1.47,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ACCOUNTCONTROLA","JJB",1,0,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMORGANCHASEBA","JJB",1,0,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","CLIENTHASJPMSOM","JJB",1,0,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","SPY","Juju Sec",91,601.82,41999.8,""],
+      ["2025-01-31","INITIAL_COST_BASIS","TSLX","Juju Sec",605,22.38,11605.71,""],
+      ["2025-01-31","INITIAL_COST_BASIS","QQQ","Juju Sec",24,522.29,7872.43,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PBHAX","Juju Sec",2474.064,4.82,11596.17,""],
+      ["2025-01-31","INITIAL_COST_BASIS","BITXX","Juju Sec",782.72,1,782.72,""],
+      ["2025-01-31","INITIAL_COST_BASIS","UNITEDSTATESDOL","Juju Sec",504.95,0,504.95,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PBHAX","IRA LF",88207.92,4.82,401929.62,""],
+      ["2025-01-31","INITIAL_COST_BASIS","FDN","IRA LF",657,262.88,87919.74,""],
+      ["2025-01-31","INITIAL_COST_BASIS","TSLX","IRA LF",2815,22.38,58125.36,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VOO","IRA LF",3,553.33,1675.22,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VGT","IRA LF",2,616.61,1289.05,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMORGANDEPOSIT","IRA LF",148.95,1,148.95,""],
+      ["2025-01-31","INITIAL_COST_BASIS","GOIXX","IRA LF",51.84,1,51.84,""],
+      ["2025-01-31","INITIAL_COST_BASIS","SIXTHSTREETLEND","LEONARD FEDER IRA RO",1000000,0.47,499644.24,""],
+      ["2025-01-31","INITIAL_COST_BASIS","USDOLLAR","LEONARD FEDER IRA RO",35919.5,1,35919.5,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VGT","Roth LF",1098,616.61,704533.76,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VOO","Roth LF",1057,553.33,590681.24,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMORGANDEPOSIT","Roth LF",8363.69,1,8363.69,""],
+      ["2025-01-31","INITIAL_COST_BASIS","BAERW","Roth LF",1000,0.1333,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JWSWF","Roth LF",500,0.04,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ALURWS","Roth LF",306,0.044,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","WTSFATHOMDIGITA","Roth LF",500,0,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","FRSXX","LFRM Brokerage",7803854.8,1,7803854.8,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PYMAX","LFRM Brokerage",467786.454,8.49,4011118.76,""],
+      ["2025-01-31","INITIAL_COST_BASIS","SPY","LFRM Brokerage",4101,601.82,2248273.77,""],
+      ["2025-01-31","INITIAL_COST_BASIS","QQQ","LFRM Brokerage",4657,522.29,2208008.12,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VOO","LFRM Brokerage",2714,553.33,1503821.45,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VGT","LFRM Brokerage",2364,616.61,1502614.22,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ARCC","LFRM Brokerage",29365,23.67,579185.89,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PBHAX","LFRM Brokerage",88525.627,4.82,457248.74,""],
+      ["2025-01-31","INITIAL_COST_BASIS","FDN","LFRM Brokerage",1167,262.88,237080.73,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMPRJ","LFRM Brokerage",10000,20.88,250000,""],
+      ["2025-01-31","INITIAL_COST_BASIS","GOOG","LFRM Brokerage",620,205.6,49674.43,""],
+      ["2025-01-31","INITIAL_COST_BASIS","UNITEDSTATESDOL","LFRM Brokerage",132.98,0,132.98,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JTSXX","LFRM Brokerage",1.42,1,1.42,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ACCOUNTCONTROLA","LFRM Brokerage",1,0,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMORGANCHASEBA","LFRM Brokerage",1,0,0,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ET","LFRM MLP",35754,20.48,456499.15,""],
+      ["2025-01-31","INITIAL_COST_BASIS","MPLX","LFRM MLP",13360,52.01,458242.08,""],
+      ["2025-01-31","INITIAL_COST_BASIS","WES","LFRM MLP",16628,41.15,461770.61,""],
+      ["2025-01-31","INITIAL_COST_BASIS","TRGP","LFRM MLP",3222,196.8,234687.9,""],
+      ["2025-01-31","INITIAL_COST_BASIS","EPD","LFRM MLP",14172,32.65,365966.92,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ENLINKMIDSTREAM","LFRM MLP",30260,14.12,347380.6,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PAGP","LFRM MLP",16974,21.15,220408.99,""],
+      ["2025-01-31","INITIAL_COST_BASIS","OKE","LFRM MLP",3305,97.17,219662.2,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PAA","LFRM MLP",11985,19.8,156340.35,""],
+      ["2025-01-31","INITIAL_COST_BASIS","LNG","LFRM MLP",970,223.65,150959.8,""],
+      ["2025-01-31","INITIAL_COST_BASIS","WMB","LFRM MLP",3645,55.43,130446.88,""],
+      ["2025-01-31","INITIAL_COST_BASIS","GEL","LFRM MLP",11299,10.52,119659.12,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMORGANDEPOSIT","LFRM MLP",98611.63,1,98611.63,""],
+      ["2025-01-31","INITIAL_COST_BASIS","KNTK","LFRM MLP",1368,64.43,45538.03,""],
+      ["2025-01-31","INITIAL_COST_BASIS","AM","LFRM MLP",3369,16.04,37051.53,""],
+      ["2025-01-31","INITIAL_COST_BASIS","DTM","LFRM MLP",519,101.08,26192.75,""],
+      ["2025-01-31","INITIAL_COST_BASIS","KMI","LFRM MLP",1899,27.48,33201.49,""],
+      ["2025-01-31","INITIAL_COST_BASIS","PSX","LFRM MLP",394,117.87,43245.29,""],
+      ["2025-01-31","INITIAL_COST_BASIS","ENB","LFRM MLP",596,43.24,22602.1,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JUNIUSPARTNERPR","JJB HF_PE",1500000,0.34,1465731.66,""],
+      ["2025-01-31","INITIAL_COST_BASIS","COATUEGROWTHVPR","JJB HF_PE",750000,0.66,679617.45,""],
+      ["2025-01-31","INITIAL_COST_BASIS","SIXTHSTREETLEND","JJB HF_PE",1000000,0.47,499644.24,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JUNIUSBELAIRCIV","JJB HF_PE",500000,0.73,500000,""],
+      ["2025-01-31","INITIAL_COST_BASIS","TIGERGLOBALPIPX","JJB HF_PE",500000,0.67,475000,""],
+      ["2025-01-31","INITIAL_COST_BASIS","CSSAFPRIVATEINV","JJB HF_PE",500000,0.53,463859.87,""],
+      ["2025-01-31","INITIAL_COST_BASIS","COATUEGROWTHFUN","JJB HF_PE",250000,0.45,106557.55,""],
+      ["2025-01-31","INITIAL_COST_BASIS","GSOPRIVATEINVES","JJB HF_PE",1500000,0.06,881425.07,""],
+      ["2025-01-31","INITIAL_COST_BASIS","USDOLLAR","JJB HF_PE",31118.39,1,31118.39,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VGT","Roth RM",116,616.61,74823.08,""],
+      ["2025-01-31","INITIAL_COST_BASIS","FDN","Roth RM",204,262.88,40273.7,""],
+      ["2025-01-31","INITIAL_COST_BASIS","VOO","Roth RM",34,553.33,18979.82,""],
+      ["2025-01-31","INITIAL_COST_BASIS","JPMORGANDEPOSIT","Roth RM",1627.66,1,1627.66,""]
+    ];
+
+    function run() {
+      var btn = document.getElementById('btn');
+      btn.disabled = true;
+      btn.textContent = 'Working...';
+      log('Initializing Sheets API...');
+
+      SheetsAPI.initSheetsApi()
+        .then(function () {
+          log('Authenticated.', 'ok');
+          return SheetsAPI.ensureAllTabs();
+        })
+        .then(function () {
+          log('Tabs verified.');
+          log('Uploading ' + ASSETS.length + ' assets...');
+          return SheetsAPI.upsertRows('assets', ASSETS, 0);
+        })
+        .then(function (r) {
+          log('Assets: ' + r.added + ' added, ' + r.skipped + ' skipped', 'ok');
+          log('Uploading ' + MARKS.length + ' marks...');
+          return SheetsAPI.upsertRows('marks', MARKS, 0, 1);
+        })
+        .then(function (r) {
+          log('Marks: ' + r.added + ' added, ' + r.skipped + ' skipped', 'ok');
+          log('Uploading ' + TRANSACTIONS.length + ' transactions...');
+          return SheetsAPI.upsertRows('transactions', TRANSACTIONS, 2, 3);
+        })
+        .then(function (r) {
+          log('Transactions: ' + r.added + ' added, ' + r.skipped + ' skipped', 'ok');
+          log('\nDone! All position data uploaded.', 'ok');
+          btn.textContent = 'Done';
+        })
+        .catch(function (err) {
+          log('ERROR: ' + (err.message || err), 'err');
+          btn.disabled = false;
+          btn.textContent = 'Retry';
+        });
+    }
+  </script>
+</body>
+</html>
