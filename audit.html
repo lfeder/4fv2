@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Audit — 4F</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="site-logo" href="index.html">4<span>F</span></a>
+      <nav class="primary-nav" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">Transaction Audit</h1>
+      <p class="page-subtitle">Trace every transaction and verify position/cash rules</p>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="audit-account">Account</label>
+          <select id="audit-account"><option value="All">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="audit-ticker">Ticker</label>
+          <input type="text" id="audit-ticker" placeholder="Filter...">
+        </div>
+        <div class="filter-group">
+          <label for="audit-date">Date</label>
+          <input type="text" id="audit-date" placeholder="YYYY-MM-DD">
+        </div>
+        <button class="btn btn-sm" id="audit-run-btn">Run Audit</button>
+      </div>
+
+      <!-- Summary -->
+      <div id="audit-summary" class="card hidden mb-2">
+        <div class="card-header"><h2 class="card-title">Summary</h2></div>
+        <div id="audit-summary-content"></div>
+      </div>
+
+      <!-- Position trace -->
+      <div id="audit-positions" class="hidden">
+        <h2 class="section-title">Position Trace (by Ticker + Account)</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="pos-trace-head"></thead>
+            <tbody id="pos-trace-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cash trace -->
+      <div id="audit-cash" class="hidden mt-2">
+        <h2 class="section-title">Cash Trace (by Account)</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead id="cash-trace-head"></thead>
+            <tbody id="cash-trace-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Unhandled / gaps -->
+      <div id="audit-gaps" class="hidden mt-2">
+        <h2 class="section-title">Unhandled / Gaps</h2>
+        <div id="audit-gaps-content"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">4F v2</div>
+  </footer>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/audit.js"></script>
+  <script>
+    Utils.initPage('Audit', initAudit);
+  </script>
+</body>
+</html>

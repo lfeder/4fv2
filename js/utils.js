@@ -117,6 +117,7 @@
       { label: 'Reconciliation', href: 'reconciliation.html' },
       { label: 'Performance', href: 'performance.html' },
       { label: 'Forecaster', href: 'forecaster.html' },
+      { label: 'Audit', href: 'audit.html' },
     ];
 
     var nav = document.getElementById('main-nav');

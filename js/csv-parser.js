@@ -129,6 +129,7 @@
     var quantity = Utils.parseNumber(row['Quantity'] || row['quantity'] || row['qty']);
     var price = Utils.parseNumber(row['Price USD'] || row['Price'] || row['price']);
     var amount = Utils.parseNumber(row['Amount USD'] || row['Amount'] || row['amount'] || row['Net Amount']);
+    var description = (row['Description'] || row['description'] || '').trim();
 
     return {
       date: date,
@@ -140,6 +141,7 @@
       quantity: quantity,
       price: price,
       amount: amount,
+      description: description,
     };
   }
 

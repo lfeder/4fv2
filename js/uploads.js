@@ -249,7 +249,7 @@
 
     assetPromise.then(function () {
       var txnRows = rows.map(function (r) {
-        return [r.date, r.transaction_type, r.ticker, r.account_name, r.quantity, r.price, r.amount];
+        return [r.date, r.transaction_type, r.ticker, r.account_name, r.quantity, r.price, r.amount, r.description || ''];
       });
       return SheetsAPI.appendRows('transactions', txnRows);
     }).then(function () {

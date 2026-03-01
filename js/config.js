@@ -41,6 +41,8 @@
     'Fees': 'FEE',
     'FEE': 'FEE',
     'MEMO ENTRY': 'MEMO',
+    'Journal': 'JOURNAL',
+    'JOURNAL': 'JOURNAL',
     'MEMO': 'MEMO',
     'INITIAL_COST_BASIS': 'INITIAL_COST_BASIS',
   };
@@ -64,6 +66,7 @@
     COST_ADJUSTMENT: 'badge-gray',
     EXCHANGE: 'badge-orange',
     FEE: 'badge-red',
+    JOURNAL: 'badge-orange',
     MEMO: 'badge-gray',
     INITIAL_COST_BASIS: 'badge-gray',
   };
