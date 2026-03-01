@@ -263,7 +263,7 @@
       owners: ['owner_name'],
       accounts: ['account_name', 'owner_name'],
       asset_classes: ['asset_class'],
-      assets: ['ticker', 'description', 'asset_class'],
+      assets: ['ticker', 'asset_name', 'asset_class'],
       marks: ['ticker', 'date', 'price'],
       transactions: ['date', 'transaction_type', 'ticker', 'account_name', 'quantity', 'price', 'amount'],
       positions: ['date', 'account_name', 'ticker', 'qty', 'price', 'value', 'cost'],

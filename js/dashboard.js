@@ -34,7 +34,7 @@
           var key = (a.ticker || '').toUpperCase();
           if (!key) return;
           // Normalize: find the name/description regardless of column header
-          a._name = a.description || a.name || a.Name || a.Description || '';
+          a._name = a.asset_name || a.description || a.name || a.Name || a.Description || '';
           assetMap[key] = a;
         });
 
