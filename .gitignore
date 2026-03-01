@@ -1,0 +1,6 @@
+CSVs/
+*.csv
+.DS_Store
+Thumbs.db
+node_modules/
+plan.md

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions — 4F</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="site-logo" href="index.html">4<span>F</span></a>
+      <nav class="primary-nav" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">Transactions</h1>
+      <p class="page-subtitle">Transaction history and manual entry</p>
+
+      <!-- Manual Entry Form -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <h2 class="card-title">Add Transaction</h2>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="txn-new-date">
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="txn-new-type">
+              <option value="BUY">BUY</option>
+              <option value="SELL">SELL</option>
+              <option value="REINVEST">REINVEST</option>
+              <option value="DIVIDEND">DIVIDEND</option>
+              <option value="INTEREST">INTEREST</option>
+              <option value="TRANSFER">TRANSFER</option>
+              <option value="CAPITAL_CALL">CAPITAL_CALL</option>
+              <option value="DISTRIBUTION">DISTRIBUTION</option>
+              <option value="COST_ADJUSTMENT">COST_ADJUSTMENT</option>
+              <option value="FEE">FEE</option>
+              <option value="EXCHANGE">EXCHANGE</option>
+              <option value="ADJUSTMENT">ADJUSTMENT</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ticker</label>
+            <input type="text" id="txn-new-ticker" placeholder="e.g. SPY">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Account</label>
+            <select id="txn-new-account"></select>
+          </div>
+          <div class="form-group">
+            <label>Quantity</label>
+            <input type="text" inputmode="decimal" id="txn-new-qty">
+          </div>
+          <div class="form-group">
+            <label>Price</label>
+            <input type="text" inputmode="decimal" id="txn-new-price">
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="text" inputmode="decimal" id="txn-new-amount">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-success" id="txn-submit-btn">Submit Transaction</button>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="txn-start">From</label>
+          <input type="date" id="txn-start">
+        </div>
+        <div class="filter-group">
+          <label for="txn-end">To</label>
+          <input type="date" id="txn-end">
+        </div>
+        <div class="filter-group">
+          <label for="txn-account">Account</label>
+          <select id="txn-account"><option value="All">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="txn-type">Type</label>
+          <select id="txn-type">
+            <option value="All">All</option>
+            <option value="BUY">BUY</option>
+            <option value="SELL">SELL</option>
+            <option value="REINVEST">REINVEST</option>
+            <option value="DIVIDEND">DIVIDEND</option>
+            <option value="INTEREST">INTEREST</option>
+            <option value="TRANSFER">TRANSFER</option>
+            <option value="CAPITAL_CALL">CAPITAL_CALL</option>
+            <option value="DISTRIBUTION">DISTRIBUTION</option>
+            <option value="SWEEP">SWEEP</option>
+            <option value="COST_ADJUSTMENT">COST_ADJUSTMENT</option>
+            <option value="FEE">FEE</option>
+            <option value="INITIAL_COST_BASIS">INITIAL_COST_BASIS</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="txn-ticker-filter">Ticker</label>
+          <input type="text" id="txn-ticker-filter" placeholder="Filter...">
+        </div>
+        <button class="btn btn-sm" id="txn-filter-btn">Filter</button>
+        <button class="btn btn-sm btn-secondary" id="txn-reset-btn">Reset</button>
+      </div>
+
+      <!-- Transaction Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Ticker</th>
+              <th>Account</th>
+              <th class="text-right">Qty</th>
+              <th class="text-right">Price</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="txn-body">
+            <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm text-muted mt-1" id="txn-count-label"></p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">4F v2</div>
+  </footer>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/process-transactions.js"></script>
+  <script src="js/transactions.js"></script>
+  <script>
+    Utils.initPage('Transactions', initTransactions);
+  </script>
+</body>
+</html>

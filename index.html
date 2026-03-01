@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4F Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="site-logo" href="index.html">4<span>F</span></a>
+      <nav class="primary-nav" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Account + Asset Class side by side -->
+      <div class="flex gap-2 mb-2" style="align-items:flex-start">
+        <!-- By Account (left) -->
+        <div class="card compact" style="flex:1;min-width:0">
+          <div class="table-wrapper">
+            <table class="table-compact">
+              <thead>
+                <tr>
+                  <th>Account</th>
+                  <th class="text-right">Value</th>
+                  <th class="text-right">%</th>
+                </tr>
+              </thead>
+              <tbody id="account-body"></tbody>
+              <tfoot id="account-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- By Asset Class (right) -->
+        <div class="card compact" style="flex:1;min-width:0">
+          <div class="table-wrapper">
+            <table class="table-compact">
+              <thead>
+                <tr>
+                  <th>Asset Class</th>
+                  <th class="text-right">Value</th>
+                  <th class="text-right">%</th>
+                </tr>
+              </thead>
+              <tbody id="allocation-body"></tbody>
+              <tfoot id="allocation-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="mark-date-select">As of</label>
+          <select id="mark-date-select" style="width:auto"></select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-search">Search</label>
+          <input type="search" id="filter-search" placeholder="Ticker or name...">
+        </div>
+        <div class="filter-spacer"></div>
+        <button class="btn btn-success btn-sm" id="add-asset-btn">+ Add Asset</button>
+      </div>
+
+      <!-- Portfolio Table -->
+      <div class="table-wrapper">
+        <table id="dashboard-table">
+          <thead>
+            <tr>
+              <th data-col="ticker" class="sortable">Ticker</th>
+              <th data-col="name" class="sortable">Name</th>
+              <th data-col="asset_class" class="sortable">Asset Class</th>
+              <th data-col="qty" class="text-right sortable">Qty</th>
+              <th data-col="price" class="text-right sortable">Price</th>
+              <th data-col="mark_date" class="sortable">Mark Date</th>
+              <th data-col="cost" class="text-right sortable">Cost</th>
+              <th data-col="value" class="text-right sortable">Value</th>
+              <th data-col="pnl" class="text-right sortable">P&amp;L</th>
+              <th data-col="pnl_pct" class="text-right sortable">P&amp;L %</th>
+            </tr>
+          </thead>
+          <tbody id="dashboard-body">
+            <tr><td colspan="10" class="text-center text-muted">Loading...</td></tr>
+          </tbody>
+          <tfoot id="dashboard-foot"></tfoot>
+        </table>
+      </div>
+
+      <!-- Add Asset Modal -->
+      <div id="add-asset-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:5000;display:flex;align-items:center;justify-content:center;">
+        <div class="card" style="max-width:500px;width:90%;margin:0;">
+          <div class="card-header">
+            <h2 class="card-title">Add New Asset</h2>
+            <button class="btn btn-sm btn-secondary" id="close-modal-btn">X</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Ticker</label><input type="text" id="new-ticker" maxlength="20" style="text-transform:uppercase"></div>
+            <div class="form-group"><label>Name</label><input type="text" id="new-name"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Asset Class</label><select id="new-asset-class"></select></div>
+            <div class="form-group"><label>Account</label>
+              <select id="new-account"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Quantity</label><input type="text" inputmode="decimal" id="new-qty"></div>
+            <div class="form-group"><label>Price</label><input type="text" inputmode="decimal" id="new-price"></div>
+            <div class="form-group"><label>Cost Basis</label><input type="text" inputmode="decimal" id="new-cost"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-success" id="save-asset-btn">Save Asset</button>
+            <button class="btn btn-secondary" id="cancel-asset-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">4F v2</div>
+  </footer>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/process-transactions.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    Utils.initPage('Dashboard', initDashboard);
+  </script>
+</body>
+</html>

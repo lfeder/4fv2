@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance — 4F</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="site-logo" href="index.html">4<span>F</span></a>
+      <nav class="primary-nav" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">Performance</h1>
+      <p class="page-subtitle">Time-weighted return calculations and cash flow tracking</p>
+
+      <!-- Metrics -->
+      <div class="metric-grid">
+        <div class="metric-card blue">
+          <span class="metric-label">Latest Portfolio Value</span>
+          <span class="metric-value" id="latest-value">--</span>
+        </div>
+        <div class="metric-card green">
+          <span class="metric-label">Period Return</span>
+          <span class="metric-value" id="period-return">--</span>
+        </div>
+        <div class="metric-card neutral">
+          <span class="metric-label">Cumulative TWR</span>
+          <span class="metric-value" id="twr-pct">--</span>
+        </div>
+        <div class="metric-card" style="background:linear-gradient(135deg,#f57c00,#e65100)">
+          <span class="metric-label">Net Cash Flows</span>
+          <span class="metric-value" id="net-cash-flow">--</span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="perf-owner">Owner</label>
+          <select id="perf-owner"><option value="All">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="perf-account">Account</label>
+          <select id="perf-account"><option value="All">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="perf-start">From</label>
+          <input type="date" id="perf-start">
+        </div>
+        <div class="filter-group">
+          <label for="perf-end">To</label>
+          <input type="date" id="perf-end">
+        </div>
+        <button class="btn btn-sm" id="perf-filter-btn">Filter</button>
+        <button class="btn btn-sm btn-secondary" id="perf-reset-btn">Reset</button>
+      </div>
+
+      <!-- Chart -->
+      <div class="card mb-3">
+        <div class="card-header"><h2 class="card-title">Portfolio Value Over Time</h2></div>
+        <div class="bar-chart" id="perf-chart"></div>
+      </div>
+
+      <!-- Performance Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="text-right">Portfolio Value</th>
+              <th class="text-right">Net Cash Flow</th>
+              <th class="text-right">Period Change</th>
+              <th class="text-right">Change %</th>
+              <th class="text-right">Cumulative TWR</th>
+            </tr>
+          </thead>
+          <tbody id="perf-body">
+            <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Cash Flow Details -->
+      <div class="card mt-3">
+        <div class="card-header"><h2 class="card-title">Cash Flow Details</h2></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Ticker</th>
+                <th>Account</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="cashflow-body">
+              <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">4F v2</div>
+  </footer>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/process-transactions.js"></script>
+  <script src="js/performance.js"></script>
+  <script>
+    Utils.initPage('Performance', initPerformance);
+  </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Upload — 4F</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="site-logo" href="index.html">4<span>F</span></a>
+      <nav class="primary-nav" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">CSV Upload</h1>
+      <p class="page-subtitle">Import CSVs from JPM</p>
+
+      <!-- Upload mode tabs -->
+      <div class="upload-tabs">
+        <button class="upload-tab active" data-mode="transactions">Transactions</button>
+        <button class="upload-tab" data-mode="marks">Marks</button>
+        <button class="upload-tab" data-mode="initial">Initial Load</button>
+      </div>
+
+      <!-- Transaction Upload Section -->
+      <div id="transactions-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Upload Transaction CSV</h2>
+          </div>
+          <p class="text-sm text-muted mb-2">Select a transactions CSV. You'll review account mapping and type normalization before import.</p>
+          <div class="form-group">
+            <input type="file" id="transaction-file" accept=".csv">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="process-transactions-btn" disabled>Process Transactions</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marks Upload Section -->
+      <div id="marks-section" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Upload Mark CSVs</h2>
+          </div>
+          <p class="text-sm text-muted mb-2">Select one or more position CSV files. Extracts date, ticker, and price as marks.</p>
+          <div class="form-group">
+            <input type="file" id="marks-files" accept=".csv" multiple>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="process-marks-btn" disabled>Process Marks</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Initial Load Section -->
+      <div id="initial-section" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Initial Load</h2>
+          </div>
+          <p class="text-sm text-muted mb-2">Upload position CSVs to create INITIAL_COST_BASIS transactions (qty, price, cost). Account is extracted from filenames.</p>
+          <div class="form-group">
+            <input type="file" id="initial-files" accept=".csv" multiple>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="process-initial-btn" disabled>Process Initial Load</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status area -->
+      <div id="status-area" class="hidden">
+        <div id="status-message" class="alert alert-info"></div>
+      </div>
+
+      <!-- Preview area -->
+      <div id="preview-area" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Preview</h2>
+            <span class="text-sm text-muted"><span id="preview-count">0</span> rows</span>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead id="preview-head"></thead>
+              <tbody id="preview-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warnings area -->
+      <div id="warnings-area" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Warnings</h2>
+          </div>
+          <div id="warnings-content"></div>
+        </div>
+      </div>
+
+      <!-- Account mapping area (transactions) -->
+      <div id="account-mapping-area" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Account Mapping</h2>
+          </div>
+          <p class="text-sm text-muted mb-2">Verify that each CSV account name maps to the correct canonical account.</p>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>CSV Account Name</th><th>Mapped Account</th></tr></thead>
+              <tbody id="account-mapping-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Type normalization area (transactions) -->
+      <div id="type-mapping-area" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Type Normalization</h2>
+          </div>
+          <p class="text-sm text-muted mb-2">Review how each raw transaction type will be normalized.</p>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Raw Type</th><th>Count</th><th>Normalized Type</th></tr></thead>
+              <tbody id="type-mapping-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm import button -->
+      <div id="confirm-area" class="hidden">
+        <div class="form-actions">
+          <button class="btn btn-success btn-lg" id="confirm-import-btn">Confirm Import</button>
+          <button class="btn btn-secondary" id="cancel-import-btn">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Summary area -->
+      <div id="summary-area" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Import Summary</h2>
+          </div>
+          <div id="summary-content"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">4F v2</div>
+  </footer>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/csv-parser.js"></script>
+  <script src="js/process-transactions.js"></script>
+  <script src="js/uploads.js"></script>
+  <script>
+    Utils.initPage('Uploads', initUploads);
+  </script>
+</body>
+</html>

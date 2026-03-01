@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reconciliation — 4F</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="site-logo" href="index.html">4<span>F</span></a>
+      <nav class="primary-nav" id="main-nav"></nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">Reconciliation</h1>
+      <p class="page-subtitle">Compare derived positions against month-end CSV snapshots</p>
+
+      <div class="card mb-3">
+        <div class="card-header">
+          <h2 class="card-title">Upload Month-End Position CSV</h2>
+        </div>
+        <p class="text-sm text-muted mb-2">Upload a position CSV to compare against derived positions. Marks will also be extracted.</p>
+        <div class="form-group">
+          <input type="file" id="recon-file" accept=".csv">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="recon-compare-btn" disabled>Compare</button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="recon-status" class="hidden">
+        <div id="recon-status-msg" class="alert alert-info"></div>
+      </div>
+
+      <!-- Summary metrics -->
+      <div class="metric-grid hidden" id="recon-metrics">
+        <div class="metric-card green"><span class="metric-label">Matches</span><span class="metric-value" id="recon-match-count">0</span></div>
+        <div class="metric-card" style="background:linear-gradient(135deg,#f57c00,#e65100)"><span class="metric-label">Mismatches</span><span class="metric-value" id="recon-mismatch-count">0</span></div>
+        <div class="metric-card blue"><span class="metric-label">New Positions</span><span class="metric-value" id="recon-new-count">0</span></div>
+        <div class="metric-card neutral"><span class="metric-label">Closed</span><span class="metric-value" id="recon-closed-count">0</span></div>
+      </div>
+
+      <!-- Comparison table -->
+      <div id="recon-table-area" class="hidden">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Account</th>
+                <th>Status</th>
+                <th class="text-right">CSV Qty</th>
+                <th class="text-right">Derived Qty</th>
+                <th class="text-right">Qty Diff</th>
+                <th class="text-right">CSV Cost</th>
+                <th class="text-right">Derived Cost</th>
+                <th class="text-right">Cost Diff</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recon-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">4F v2</div>
+  </footer>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/csv-parser.js"></script>
+  <script src="js/process-transactions.js"></script>
+  <script src="js/reconciliation.js"></script>
+  <script>
+    Utils.initPage('Reconciliation', initReconciliation);
+  </script>
+</body>
+</html>
